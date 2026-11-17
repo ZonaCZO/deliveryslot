@@ -61,7 +61,7 @@ and preventing conflicting bookings.
 ## Technology Stack
 
 - Backend: Node.js + Express
-- Frontend:
+- Frontend: JavaScript + React
 - DevOps: MySQL
 - DevOps: GitHub Actions (CI/CD), Docker (planned)
 - Project Management: Trello

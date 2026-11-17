@@ -62,7 +62,9 @@ and preventing conflicting bookings.
 
 Backend: Node.js + Express
 Frontend:
-DevOps:
+DevOps: MySQL
+DevOps: GitHub Actions (CI/CD), Docker (planned)
+Project Management: Trello
 
 ## Setup and Run Instructions
 

@@ -48,19 +48,21 @@ and preventing conflicting bookings.
 ## Team
 
 - Anastasiya Marozava — Frontend
-- Irina Staric — Role to be confirmed
-- Nikita Prokhorov — Role to be confirmed
-- Mykhail Buniak — Role to be confirmed
+- Irina Staric — QA
+- Nikita Prokhorov — Backend
+- Mykhail Buniak — DevOps
 
 ## Project Links
 
-- Repository: [add repository URL]
-- Trello board: [add board URL]
+- Repository: [URL](https://github.com/ZonaCZO/deliveryslot)
+- Trello board: [URL](https://trello.com/invite/b/6ad4fd1622cfd410847b6c0d/ATTI6f0ae6f2e006473732fef36d8efb8941A5F9BD49/deliveruslot)
 - Living project report: [add report URL]
 
 ## Technology Stack
 
-To be added once the team confirms the technologies.
+Backend: Node.js + Express
+Frontend:
+DevOps:
 
 ## Setup and Run Instructions
 

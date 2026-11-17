@@ -50,7 +50,7 @@ and preventing conflicting bookings.
 - Anastasiya Marozava — Frontend
 - Irina Staric — QA
 - Nikita Prokhorov — Backend
-- Mykhail Buniak — DevOps
+- Mykhail Buniak — DevOps/Databases
 
 ## Project Links
 

@@ -60,11 +60,11 @@ and preventing conflicting bookings.
 
 ## Technology Stack
 
-Backend: Node.js + Express
-Frontend:
-DevOps: MySQL
-DevOps: GitHub Actions (CI/CD), Docker (planned)
-Project Management: Trello
+- Backend: Node.js + Express
+- Frontend:
+- DevOps: MySQL
+- DevOps: GitHub Actions (CI/CD), Docker (planned)
+- Project Management: Trello
 
 ## Setup and Run Instructions
 

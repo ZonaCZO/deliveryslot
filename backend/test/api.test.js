@@ -1,4 +1,4 @@
-import { test } from 'node:test';
+import { test } from '@jest/globals';
 import assert from 'node:assert/strict';
 import request from 'supertest';
 import { createApp } from '../src/app.js';
@@ -24,3 +24,4 @@ test('missing authentication and invalid login do not expose accounts', async ()
   assert.deepEqual(wrong.body, missing.body);
   await request(app).post('/auth/login').set('Content-Type', 'application/json').send('{').expect(400);
 });
+

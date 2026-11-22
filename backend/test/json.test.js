@@ -1,4 +1,4 @@
-import { test } from 'node:test';
+import { test } from '@jest/globals';
 import assert from 'node:assert/strict';
 import request from 'supertest';
 import { DateTime } from 'luxon';
@@ -47,3 +47,4 @@ test('JSON mode: login, concurrent booking, ownership, cancellation and staff ma
   const newCarrier = await request(fresh).post('/auth/login').send({ email: 'carrier@test.com', password: 'CarrierDemo123!' }).expect(200);
   assert.equal((await request(fresh).get('/bookings/my').set('Authorization', `Bearer ${newCarrier.body.token}`).expect(200)).body.length, 0);
 });
+

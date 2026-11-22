@@ -1,9 +1,9 @@
-import { test } from 'node:test';
+import { test } from '@jest/globals';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { createPool } from '../src/db/pool.js';
 import { DeliveryService } from '../src/services/delivery.js';
-test('MySQL concurrent booking, ownership, cancellation and rebooking', { skip: process.env.RUN_MYSQL_TESTS !== '1' }, async () => {
+(process.env.RUN_MYSQL_TESTS === '1' ? test : test.skip)('MySQL concurrent booking, ownership, cancellation and rebooking', async () => {
   const pool = createPool(), service = new DeliveryService(pool);
   let userId, slotId;
   try {
@@ -29,3 +29,4 @@ test('MySQL concurrent booking, ownership, cancellation and rebooking', { skip: 
     await pool.end();
   }
 });
+

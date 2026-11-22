@@ -1,4 +1,4 @@
-import { test } from 'node:test';
+import { test } from '@jest/globals';
 import assert from 'node:assert/strict';
 import { DeliveryService } from '../src/services/delivery.js';
 
@@ -64,3 +64,4 @@ test('staff cannot close booked or past slots', async () => {
     await assert.rejects(service.setSlotStatus(7, 'closed'), e => e.status === 409);
   }
 });
+

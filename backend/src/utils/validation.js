@@ -10,8 +10,7 @@ export function text(value, name, max) {
 }
 export function email(value) {
   const result = text(value, 'email', 255);
-  requireThat(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(result), 400, 'Invalid email');
-  return result;
+  requireThat(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(result), 400, 'Invalid email'); return result;
 }
 export function dateRange(value) {
   requireThat(typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value), 400, 'Date must be YYYY-MM-DD');

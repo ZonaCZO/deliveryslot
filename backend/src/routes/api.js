@@ -4,14 +4,14 @@ import { verifyPassword } from '../utils/passwords.js';
 import { id, text, email, dateRange, slotTimes } from '../utils/validation.js';
 import { requireThat } from '../utils/errors.js';
 import { role } from '../middleware/auth.js';
-export function apiRouter(pool, service, auth) {
+import { mysqlUsers } from '../db/users.js';
+export function apiRouter(pool, service, auth, users = mysqlUsers(pool)) {
   const router = Router();
   router.post('/auth/login', rateLimit({ windowMs: 15 * 60000, limit: 30, standardHeaders: 'draft-8', legacyHeaders: false }), async (req, res) => {
     const address = email(req.body.email);
     requireThat(typeof req.body.password === 'string' && req.body.password.length > 0 && req.body.password.length <= 1024, 400, 'Invalid password');
-    const password = req.body.password;
-    const [[user]] = await pool.execute('SELECT id, email, role, password_hash FROM users WHERE email=?', [address]);
-    const valid = await verifyPassword(password, user?.password_hash);
+    const user = await users.byEmail(address);
+    const valid = await verifyPassword(req.body.password, user?.password_hash);
     requireThat(valid && user, 401, 'Invalid email or password');
     const { password_hash, ...safeUser } = user;
     res.json({ token: auth.issue(user), tokenType: 'Bearer', user: safeUser });
@@ -19,13 +19,9 @@ export function apiRouter(pool, service, auth) {
   router.use(auth.middleware);
   router.post('/auth/logout', (req, res) => { auth.revoke(req.token); res.sendStatus(204); });
   router.get('/auth/me', (req, res) => res.json(req.user));
-  // Sprint 1 has one warehouse and one bay; do not invent a database table.
   const warehouse = { id: 1, name: 'DockPoint', timeZone: 'Europe/Warsaw', bays: 1 };
   router.get('/warehouses', (req, res) => res.json([warehouse]));
-  router.get('/warehouses/:id', (req, res) => {
-    requireThat(id(req.params.id) === warehouse.id, 404, 'Warehouse not found');
-    res.json(warehouse);
-  });
+  router.get('/warehouses/:id', (req, res) => { requireThat(id(req.params.id) === 1, 404, 'Warehouse not found'); res.json(warehouse); });
   router.get('/slots', async (req, res) => res.json(await service.available(dateRange(req.query.date))));
   router.post('/bookings', role('carrier'), async (req, res) => {
     const data = { slotId: id(req.body.slotId), carrierName: text(req.body.carrierName, 'carrierName', 255),

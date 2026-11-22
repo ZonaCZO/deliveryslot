@@ -1,0 +1,30 @@
+
+name: DockPoint CI
+
+on:
+  push:
+    branches:
+      - main
+      - 'feature/**'
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  repository-check:
+    name: Check repository structure
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify project folders
+        run: |
+          test -d backend
+          test -d database
+          test -d frontend
+          test -f README.md
+
+      - name: CI completed
+        run: echo "DockPoint repository structure is valid"

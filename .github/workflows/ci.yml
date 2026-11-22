@@ -119,3 +119,19 @@ jobs:
           test "$ACTIVE" -eq 1
           echo "PASS: Cancelled slot was successfully rebooked"
 
+      
+      - name: Test duplicate slot prevention
+        run: |
+          if mysql -h 127.0.0.1 -uroot -ptestpassword deliveryslot -e "
+          INSERT INTO delivery_slots
+          (start_time_utc, end_time_utc, status)
+          VALUES
+          ('2026-12-03 08:00:00', '2026-12-03 09:00:00', 'open');
+          "; then
+            echo "ERROR: Duplicate slot start time was allowed!"
+            exit 1
+          else
+            echo "PASS: Duplicate slot start time was rejected"
+          fi
+
+

@@ -1,0 +1,13 @@
+{
+  "users": [
+    { "id": 1, "email": "carrier@test.com", "role": "carrier", "password": "CarrierDemo123!" },
+    { "id": 2, "email": "staff@test.com", "role": "warehouse_staff", "password": "StaffDemo123!" },
+    { "id": 3, "email": "carrier2@test.com", "role": "carrier", "password": "CarrierDemo123!" }
+  ],
+  "slots": [
+    { "dayOffset": 1, "hour": 8, "status": "open" },
+    { "dayOffset": 1, "hour": 9, "status": "open" },
+    { "dayOffset": 1, "hour": 10, "status": "closed" },
+    { "dayOffset": 2, "hour": 8, "status": "open" }
+  ]
+}

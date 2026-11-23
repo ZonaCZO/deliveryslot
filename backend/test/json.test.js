@@ -1,0 +1,50 @@
+import { test } from '@jest/globals';
+import assert from 'node:assert/strict';
+import request from 'supertest';
+import { DateTime } from 'luxon';
+import { createApp } from '../src/app.js';
+import { createJsonBackend } from '../src/services/json-delivery.js';
+
+test('JSON mode: login, concurrent booking, ownership, cancellation and staff management without MySQL', async () => {
+  const app = createApp(null, await createJsonBackend());
+  const health = await request(app).get('/health').expect(200);
+  assert.equal(health.body.database, 'json');
+  const login = async (email, password) => {
+    const result = await request(app).post('/auth/login').send({ email, password }).expect(200);
+    assert.equal(result.body.user.password_hash, undefined);
+    return `Bearer ${result.body.token}`;
+  };
+  const carrier = await login('carrier@test.com', 'CarrierDemo123!');
+  const other = await login('carrier2@test.com', 'CarrierDemo123!');
+  const staff = await login('staff@test.com', 'StaffDemo123!');
+  const date = DateTime.now().setZone('Europe/Warsaw').plus({ days: 1 }).toISODate();
+  const available = () => request(app).get(`/slots?date=${date}`).set('Authorization', carrier).expect(200);
+  const slots = await available();
+  assert.equal(slots.body.length, 2);
+  const slotId = slots.body[0].id;
+  const book = () => request(app).post('/bookings').set('Authorization', carrier).send({ slotId, carrierName: 'Demo', truckRegistration: 'WA123', contactEmail: 'demo@test.com' });
+  const results = await Promise.all([book(), book()]);
+  assert.deepEqual(results.map(r => r.status).sort(), [201, 409]);
+  const bookingId = results.find(r => r.status === 201).body.id;
+  assert.equal((await available()).body.length, 1);
+  await request(app).patch(`/bookings/${bookingId}/cancel`).set('Authorization', other).expect(403);
+  assert.equal((await request(app).get('/bookings/my').set('Authorization', other).expect(200)).body.length, 0);
+  await request(app).patch(`/staff/slots/${slotId}/close`).set('Authorization', carrier).expect(403);
+  await request(app).patch(`/staff/slots/${slotId}/close`).set('Authorization', staff).expect(409);
+  await request(app).patch(`/bookings/${bookingId}/cancel`).set('Authorization', carrier).expect(200);
+  await book().expect(201);
+  const start = DateTime.now().plus({ days: 7 }).startOf('day').toUTC();
+  const body = { startTime: start.toISO({ suppressMilliseconds: true }), endTime: start.plus({ hours: 1 }).toISO({ suppressMilliseconds: true }) };
+  const created = await request(app).post('/staff/slots').set('Authorization', staff).send(body).expect(201);
+  await request(app).post('/staff/slots').set('Authorization', staff).send(body).expect(409);
+  await request(app).patch(`/staff/slots/${created.body.id}/close`).set('Authorization', staff).expect(200);
+  await request(app).patch(`/staff/slots/${created.body.id}/reopen`).set('Authorization', staff).expect(200);
+  const schedule = await request(app).get(`/staff/schedule?date=${date}`).set('Authorization', staff).expect(200);
+  assert.ok(schedule.body.find(s => s.id === slotId).booking_id);
+  await request(app).post('/auth/logout').set('Authorization', carrier).expect(204);
+  await request(app).get('/auth/me').set('Authorization', carrier).expect(401);
+  const fresh = createApp(null, await createJsonBackend());
+  const newCarrier = await request(fresh).post('/auth/login').send({ email: 'carrier@test.com', password: 'CarrierDemo123!' }).expect(200);
+  assert.equal((await request(fresh).get('/bookings/my').set('Authorization', `Bearer ${newCarrier.body.token}`).expect(200)).body.length, 0);
+});
+

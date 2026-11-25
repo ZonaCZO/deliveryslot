@@ -1,0 +1,40 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f3f6fb;
+  color: #172b4d;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+/* Main navigation */
+
+.login-card nav {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.login-card nav button {
+  flex: 1;
+  padding: 12px;
+  font-size: 14px;
+}
+
+.login-card nav button[aria-current="page"] {
+  background: #163c8c;
+  outline: 2px solid #93c5fd;
+  outline-offset: 2px;
+}
+
+.login-card nav button:not([aria-current="page"]) {
+  background: #e2e8f0;
+  color: #334155;
+}

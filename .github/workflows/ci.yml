@@ -1,0 +1,137 @@
+
+name: DockPoint CI
+
+on:
+  push:
+    branches:
+      - main
+      - 'feature/**'
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  repository-check:
+    name: Check repository structure
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify project folders
+        run: |
+          test -d backend
+          test -d database
+          test -d frontend
+          test -f README.md
+
+  database-test:
+    name: Test MySQL database
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: testpassword
+          MYSQL_DATABASE: deliveryslot
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -ptestpassword"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install MySQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mysql-client
+
+      - name: Create database tables
+        run: |
+          mysql -h 127.0.0.1 -uroot -ptestpassword deliveryslot < database/schema.sql
+
+      - name: Insert test data
+        run: |
+          mysql -h 127.0.0.1 -uroot -ptestpassword deliveryslot < database/seed.sql
+
+      
+      - name: Verify database tables and seed data
+        run: |
+          USERS=$(mysql -h 127.0.0.1 -uroot -ptestpassword -N -s deliveryslot -e "SELECT COUNT(*) FROM users;")
+          SLOTS=$(mysql -h 127.0.0.1 -uroot -ptestpassword -N -s deliveryslot -e "SELECT COUNT(*) FROM delivery_slots;")
+          BOOKINGS=$(mysql -h 127.0.0.1 -uroot -ptestpassword -N -s deliveryslot -e "SELECT COUNT(*) FROM bookings;")
+
+          test "$USERS" -eq 2
+          test "$SLOTS" -eq 3
+          test "$BOOKINGS" -eq 0
+
+          echo "Database schema and seed data verified successfully"
+      
+      
+      - name: Test double booking prevention
+        run: |
+          mysql -h 127.0.0.1 -uroot -ptestpassword deliveryslot -e "
+          INSERT INTO bookings
+          (booking_reference, carrier_user_id, slot_id, carrier_name, truck_registration, contact_email)
+          VALUES
+          ('TEST-001', 1, 1, 'Test Carrier', 'TEST123', 'carrier@test.com');
+          "
+
+          if mysql -h 127.0.0.1 -uroot -ptestpassword deliveryslot -e "
+          INSERT INTO bookings
+          (booking_reference, carrier_user_id, slot_id, carrier_name, truck_registration, contact_email)
+          VALUES
+          ('TEST-002', 1, 1, 'Test Carrier', 'TEST456', 'carrier@test.com');
+          " 2>mysql-error.txt; then
+            echo "ERROR: Double booking was allowed!"
+            exit 1
+          fi
+
+          grep -q "Duplicate entry.*uq_active_slot" mysql-error.txt
+          echo "PASS: Double booking was prevented by the unique constraint"
+
+
+      - name: Test cancellation and rebooking
+        run: |
+          mysql -h 127.0.0.1 -uroot -ptestpassword deliveryslot -e "
+          UPDATE bookings
+          SET status = 'cancelled'
+          WHERE booking_reference = 'TEST-001';
+
+          INSERT INTO bookings
+          (booking_reference, carrier_user_id, slot_id, carrier_name, truck_registration, contact_email)
+          VALUES
+          ('TEST-003', 1, 1, 'Test Carrier', 'TEST789', 'carrier@test.com');
+          "
+
+          ACTIVE=$(mysql -h 127.0.0.1 -uroot -ptestpassword -N -s deliveryslot -e "
+          SELECT COUNT(*) FROM bookings
+          WHERE slot_id = 1 AND status = 'active';
+          ")
+
+          test "$ACTIVE" -eq 1
+          echo "PASS: Cancelled slot was successfully rebooked"
+
+      
+      - name: Test duplicate slot prevention
+        run: |
+          if mysql -h 127.0.0.1 -uroot -ptestpassword deliveryslot -e "
+          INSERT INTO delivery_slots
+          (start_time_utc, end_time_utc, status)
+          VALUES
+          ('2026-12-03 08:00:00', '2026-12-03 09:00:00', 'open');
+          "; then
+            echo "ERROR: Duplicate slot start time was allowed!"
+            exit 1
+          else
+            echo "PASS: Duplicate slot start time was rejected"
+          fi
+
+

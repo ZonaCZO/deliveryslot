@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS users (
 -- Delivery slots
 CREATE TABLE IF NOT EXISTS delivery_slots (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    start_time_utc DATETIME NOT NULL,
+    start_time_utc DATETIME NOT NULL UNIQUE,
     end_time_utc DATETIME NOT NULL,
     status ENUM('open', 'closed') NOT NULL DEFAULT 'open',
 
